@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Home</title>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="icon" type="image/jpg" href="../image/logo.jpg">
+    <link rel="stylesheet" href="../css/nav.css">
+    <style>
+        body{
+            background: green;
+            color:#ffffff;
+        }
+        h1{
+            text-align:center;
+
+        } 
+        button{
+            color:blueviolet;
+            background-color:#c9d6ff;
+            padding:5px;
+            border-radius:5px;
+            font-size:1rem;
+            font-weight:bold;
+            border:none;
+        }
+        button:hover{
+            text-decoration: underline;
+            color:blue;
+        }
+        button {
+            padding:10px;
+
+        }
+        div{
+            font-weight:400;
+
+        }
+        span{
+            font-weight:600;
+            font-size:22px;
+        }
+        .container1{
+            width: 50%;
+            text-align: center; 
+            padding-top: 50px;
+            width: 100%;
+            align-items: center;
+            border-radius: 10px;
+            margin: 20px auto;
+        }
+        .container2{
+            text-align: center; 
+            padding-top: 120px;
+            width: 100%;
+            align-items: center;
+            border-radius: 10px;
+            margin: 20px auto;
+        }
+        .chart{
+            padding-top: 30px;
+            padding-left: 30%;
+        }
+        .content {
+            width: 50%;
+            margin: auto;
+            align-items: center;
+            background-color: #f8f9fa;
+            color: #000000;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .content div {
+            padding:10px;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+    </style>
+    <script type="module" src="../js/admin.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <img src="../image/logo.jpg" class="logo">
+        <ul>
+            <li><a href="admin.html">Home</a></li>
+            <li><a href="pointcode.html">Manage PointCode</a></li>
+            <li><a href="events_list.html">Manage Event</a></li>
+        </ul>
+    </div>
+
+    <div class="content">
+        <h1>Welcome to the Homepage</h1>
+        <div>Name: <span id="loggedAdminFName"></span></div>
+        <div>Email: <span id="loggedAdminEmail"></span></div>
+        <button id="logout">Logout</button>
+    </div>
+    <div class="container1">
+        <h2>NUMBER of CLAIMCODE</h2>
+        <div class="chart" id="columnchart_values" style="width: 900px; height: 300px;"></div>
+    </div>
+    
+    <div class="container2">
+        <h2>NUMBER of EVENTS (upcoming OR outdated)</h>
+        <div class="chart" id="event_chart" style="width: 900px; height: 300px;"></div>
+    </div>
+
+  <script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyB9M81AhHyIy6gs1GBBZBUMv-y5SrThWAA",
+        authDomain: "susbin-420d2.firebaseapp.com",
+        databaseURL: "https://susbin-420d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "susbin-420d2",
+        storageBucket: "susbin-420d2.appspot.com",
+        messagingSenderId: "896697035981",
+        appId: "1:896697035981:web:f2f4168c3eb242361c0d84"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Load Google Charts after loading Firestore data
+    google.charts.load("current", {packages:['corechart']});
+    google.charts.setOnLoadCallback(ClaimCodeChart);
+
+    async function ClaimCodeChart() {
+        // Query Firestore for 'point' collection
+        const pointsSnapshot = await getDocs(collection(db, 'point'));
+        const points = {};
+        const validPoints = [10, 20, 30, 40, 50, 100];
+
+        // Initialize point counts
+        validPoints.forEach(p => points[p] = 0);
+
+        // Count occurrences of each point
+        pointsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const pointValue = data.point;
+            if (validPoints.includes(pointValue)) {
+                points[pointValue]++;
+            }
+        });
+
+        // Prepare data for Google Charts
+        const chartData = [
+            ["Point", "Number of Codes", { role: "style" }]
+        ];
+        validPoints.forEach(point => {
+            chartData.push([point.toString(), points[point], "color: #76A7FA"]);
+        });
+
+        // Convert to Google Charts format
+        const data = google.visualization.arrayToDataTable(chartData);
+
+
+        // Get the maximum value for the vAxis
+        const maxCount = Math.max(...Object.values(points));
+        
+        // Dynamically generate the ticks array
+        const ticksArray = [];
+        for (let i = 0; i <= maxCount; i++) {
+            ticksArray.push(i);
+        }
+
+        // Chart Setup
+        const options = {
+            title: "Number of Claims",
+            width: 600,
+            height: 400,
+            bar: { groupWidth: "95%" },
+            legend: { position: "none" },
+            hAxis: {
+                title: 'Point',
+                format: '0'
+            },
+            vAxis: {
+                title: 'Number of Codes',
+                format: '0', // Ensure only whole numbers
+                ticks: ticksArray, // Dynamic ticks with an interval of 1
+                viewWindow: {
+                    min: 0, // Ensure y-axis starts at 0
+                    max: ticksArray[ticksArray.length - 1] // Set max to highest tick
+                }
+            }
+        };
+
+        // Draw chart
+        const chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+        chart.draw(data, options);
+    }
+
+    google.charts.setOnLoadCallback(EventsChart);
+
+    async function EventsChart() {
+        const eventSnapshot = await getDocs(collection(db, 'events'));
+
+        // Classify events into 'Outdated' and 'Upcoming'
+        let outdatedCount = 0;
+        let upcomingCount = 0;
+        const currentDate = new Date();
+        const events = [];
+
+        eventSnapshot.forEach((doc) => {
+            const eventDate = new Date(doc.data().date);
+            if (eventDate < currentDate) {
+                outdatedCount++;
+                events.push(outdatedCount);
+            } else {
+                upcomingCount++;
+                events.push(upcomingCount);
+            }
+        });
+
+        var eventData = google.visualization.arrayToDataTable([
+            ["Status", "Number of Events", { role: "style" }],
+            ["Outdated", outdatedCount, "red"],
+            ["Upcoming", upcomingCount, "#76a7fa"]
+        ]);
+
+        // Get the maximum value for the vAxis
+        const maxCount = Math.max(...Object.values(events));
+        
+        // Dynamically generate the ticks array
+        const ticksArray = [];
+        for (let i = 0; i <= maxCount; i++) {
+            ticksArray.push(i);
+        }
+        console.log(ticksArray);
+        var eventOptions = {
+            title: "Event Status (Outdated or Upcoming)",
+            width: 600,
+            height: 400,
+            bar: { groupWidth: "95%" },
+            legend: { position: "none" },
+            vAxis: {
+                // title: 'Number of Events',
+                // viewWindow: { min: 0 },
+                // // format: '0'
+                // ticks: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+                title: 'Number of Events',
+                format: '0', // Ensure only whole numbers
+                ticks: ticksArray, // Dynamic ticks with an interval of 1
+                viewWindow: {
+                    min: 0, // Ensure y-axis starts at 0
+                    max: ticksArray[ticksArray.length - 1] // Set max to highest tick
+                }
+            }
+        };
+
+    var eventChart = new google.visualization.ColumnChart(document.getElementById("event_chart"));
+    eventChart.draw(eventData, eventOptions);
+    }
+</script>
+
+</body>
+</html>

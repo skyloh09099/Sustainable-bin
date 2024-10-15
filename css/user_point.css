@@ -1,0 +1,66 @@
+/* user_reward.css */
+body {
+    background-color: #015613; /* Dark green background */
+}
+
+.container {
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent background */
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+}
+
+h1, h2 {
+    color: white;
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    background-color: #fff;
+    color: #000;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+p#resultMessage {
+    font-size: 16px;
+    color: yellow;
+}
+
+a {
+    color: white;
+    text-decoration: none;
+    margin-bottom: 20px;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+li {
+    list-style: none;
+    margin-bottom: 10px;
+}
+
+.content{
+    padding-top: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

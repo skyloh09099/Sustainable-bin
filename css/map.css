@@ -1,0 +1,20 @@
+.table{
+    color: rgb(215, 215, 215);
+    background: rgb(1, 51, 0);
+    text-align: left;
+    max-width: 800px;
+}
+
+/* Rounded border */
+hr.rounded {
+    border-top: 5px solid #bbb;
+    border-radius: 5px;
+}
+
+h1{
+    padding-top: 30px;
+}
+
+body{
+    background: #015613;
+}
