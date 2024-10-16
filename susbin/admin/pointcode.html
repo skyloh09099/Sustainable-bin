@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Point Code</title>
+    <link rel="stylesheet" href="../css/nav.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        h2{color:aliceblue;}
+        label{display: inline-block; width:80px;color:aliceblue;}
+        input,select{width: 120px;}
+        body{background: green;}
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <img src="../image/logo.jpg" class="logo">
+        <ul>
+            <li><a href="admin.html">Home</a></li>
+            <li><a href="pointcode.html">Manage PointCode</a></li>
+            <li><a href="events_list.html">Manage Event</a></li>
+        </ul>
+    </div>
+
+    <div class="container mt-3"> 
+        <h2 class="claimcodetitle">Manage Claim Code</h2>
+        <!-- <label>Point Code</label> <input id="Rollbox" type="text"> <br><br> -->
+        <label>Generate</label>
+        <select id="Numbox">
+            <option value="1">1 code</option>
+            <option value="3">3 code</option>
+            <option value="10">10 code</option>
+        </select> 
+        <br> <br>
+        <label>Point</label>
+        <select id="Pointbox">
+            <option value=10>10</option>
+            <option value=20>20</option>
+            <option value=30>30</option>
+            <option value=40>40</option>
+            <option value=50>50</option>
+            <option value=100>100</option>
+        </select>
+
+        <hr>
+        <button id="Insbtn">INSERT</button>
+        <button id="Delbtn">DELETE</button>
+    </div>
+
+    <div class="container mt-3">
+        <table class="table table-dark">
+            <thead>
+                <th>Select All <input type="checkbox" id="selectAll"></th>
+                <th>Sno</th>
+                <th>Point</th>
+                <th>Claim Code</th>
+            </thead>
+            <tbody id="tbody1"></tbody>
+        </table>
+    </div>
+    
+    <script>
+        // -------------------FILLING THE TABLE
+        var userNo = 0;
+        var tbody = document.getElementById('tbody1');
+
+        function AddItemToTable(id, code,point){
+            let trow = document.createElement("tr");
+            let td0 = document.createElement("td");
+            let checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = id; // Assign Firestore document ID to checkbox value
+            td0.appendChild(checkbox);
+            
+            let td1 = document.createElement("td");
+            let td2 = document.createElement("td");
+            let td3 = document.createElement("td");
+
+            td1.innerHTML= ++userNo;
+            td2.innerHTML= code;
+            td3.innerHTML= point;
+
+            trow.appendChild(td0); //checkbox column
+            trow.appendChild(td1);
+            trow.appendChild(td2);
+            trow.appendChild(td3);
+            tbody.appendChild(trow);
+        }
+
+        function AddAllItemsToTable(ThePoint){
+            userNo=0;
+            tbody.innerHTML="";
+            ThePoint.forEach(element => {
+                AddItemToTable(element.id,element.point,element.code); 
+                //include firestore document id
+            });
+        }
+
+                // Add event listener to 'Select All' checkbox
+        document.getElementById('selectAll').addEventListener('click', function() {
+            let checkboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked; // Set all checkboxes to the 'Select All' checkbox state
+            });
+        });
+
+    </script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyB9M81AhHyIy6gs1GBBZBUMv-y5SrThWAA",
+          authDomain: "susbin-420d2.firebaseapp.com",
+          databaseURL: "https://susbin-420d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "susbin-420d2",
+          storageBucket: "susbin-420d2.appspot.com",
+          messagingSenderId: "896697035981",
+          appId: "1:896697035981:web:f2f4168c3eb242361c0d84"
+        };
+
+        const app = initializeApp(firebaseConfig);
+
+        import {
+            getFirestore, doc, getDoc, getDocs, setDoc, collection, addDoc, updateDoc, deleteDoc, deleteField
+        }
+        from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+        const db = getFirestore();
+
+// -------------------References
+        // let NumBox = document.getElementById("Numbox");
+        // let PointBox = document.getElementById("Pointbox");
+
+        let insBtn = document.getElementById("Insbtn");
+        let delBtn = document.getElementById("Delbtn");
+
+
+// program to generate random strings
+        const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+        function generateString(length) {
+            let result = '';
+            const charactersLength = characters.length;
+            for ( let i = 0; i < length; i++ ) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+
+            return result;
+}
+
+// --------------------ADDING DOCUMENT
+
+        async function AddDocument_AutoID() {
+
+            const numCodes = Number(document.getElementById("Numbox").value);
+            const pointValue = Number(document.getElementById("Pointbox").value);
+
+            for (let i = 0; i < numCodes; i++) {
+            var ref = collection(db, "point");
+
+            const docRef = await addDoc(
+                ref, { 
+                    point: pointValue,
+                    code: generateString(5) // Generate a random 5-character code
+                }
+            )
+            .catch((error)=>{
+                alert("Unsuccessful operation, error: " + error);
+                return; // Exit the loop in case of error
+            });
+        }
+
+        alert(`${numCodes} code(s) added successfully!`);
+        GetAllDataOnce(); // Refresh the table
+        }
+
+        async function AddDocument_CustomID() {
+            var ref = doc(db, "TheStudentsList", RollBox.value);
+
+            await setDoc(
+                ref, { 
+                    NameOfStd: NameBox.value, //input tag
+                    RollNo: RollBox.value,
+                    Section: SecBox.value,
+                    Gender: GenBox.value
+                }
+            )
+            .then(()=>{
+                alert("data added successfully");
+            })
+            .catch((error)=>{
+                alert("Unsuccessful operation, error:"+error);
+            });
+        }
+
+// -------------------DELETING DOCUMENT
+
+        async function DeleteSelectedDocuments(){
+
+            let checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+
+            if(checkboxes.length === 0) {
+                alert("No record selected");
+                return;
+            }
+            checkboxes.forEach(async (checkbox) => {
+                var ref = doc(db, "point", checkbox.value); // Use the checkbox value (Firestore ID) to delete the document
+                await deleteDoc(ref)
+                .then(() => {
+                    console.log(`Deleted document with ID: ${checkbox.value}`);
+                })
+                .catch((error) => {
+                    console.error(`Error deleting document with ID ${checkbox.value}: `, error);
+                });
+            });
+
+            GetAllDataOnce();
+        }
+
+// --------------------Assign Events To Btns
+
+        insBtn.addEventListener("click", AddDocument_AutoID);
+        delBtn.addEventListener("click",DeleteSelectedDocuments);
+
+//--------------------GET ALL DATA
+        async function GetAllDataOnce(){
+            const querySnapshot = await getDocs(collection(db,"point"));
+
+            var users = [];
+
+            querySnapshot.forEach(doc => {
+                users.push({ id: doc.id, ...doc.data() }); 
+                // Include document ID in the data
+            });
+
+            AddAllItemsToTable(users);
+        }
+        async function GetAllDataRealtime(){
+            const dbRef = collection(db,"point");
+
+            onSnapshot(dbRef,(querySnapshot)=>{
+                
+                var users = [];
+
+                querySnapshot.forEach(doc => {
+                    // Include document ID in the data
+                    users.push({ id: doc.id, ...doc.data() }); 
+                })
+                AddAllItemsToTable(users);
+            });
+            var users = [];
+        }
+        window.onload = GetAllDataOnce;
+
+    </script>
+
+</body>
+</html>

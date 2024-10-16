@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event List</title>
+    <link rel="icon" type="image/jpg" href="../image/logo.jpg">
+    <link rel="stylesheet" href="../css/nav.css">
+    <link rel="stylesheet" href="../css/events.css">
+</head>
+<body>
+    <div class="navbar">
+        <img src="../image/logo.jpg" class="logo">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="recycleInfo.html">Local Recycling Info</a></li>
+            <li><a href="map.html">Find a Recycle Point</a></li>
+            <li><a href="quiz.html">Quiz</a></li>
+            <li><a href="events.html">Event</a></li>
+            <li><a href="user.html">Member</a></li>
+        </ul>
+    </div>
+
+    <div class="title_div">
+        <h1 class="title">Events</h1>
+    </div>
+
+    <!-- This div will contain all the dynamically loaded events -->
+    <div id="eventsContainer"></div>
+
+
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9M81AhHyIy6gs1GBBZBUMv-y5SrThWAA",
+            authDomain: "susbin-420d2.firebaseapp.com",
+            databaseURL: "https://susbin-420d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "susbin-420d2",
+            storageBucket: "susbin-420d2.appspot.com",
+            messagingSenderId: "896697035981",
+            appId: "1:896697035981:web:f2f4168c3eb242361c0d84"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Fetch and display events from Firestore
+        async function loadEvents() {
+            const eventsContainer = document.getElementById('eventsContainer');
+            const eventsQuery = query(collection(db, 'events'), orderBy('date', 'desc')); // Query events by date
+            const querySnapshot = await getDocs(eventsQuery);
+
+            // Clear existing content
+            eventsContainer.innerHTML = '';
+
+            // Loop through each document in the snapshot
+            querySnapshot.forEach(doc => {
+                const event = doc.data();
+                const eventHtml = `
+                    <div class="event_title">
+                        <button class="collapsible">${event.title}</button>
+                        <div class="content">
+                            <p>
+                                <h3>Date:</h3> ${event.date}<br>
+                                <h3>Time:</h3> ${event.startTime} to ${event.endTime}<br>
+                                <h3>Venue:</h3> ${event.venue}<br>
+                                <h3>Event Type:</h3> ${event.eventType}<br>
+                                <h3>Detail:</h3> ${event.detail}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                eventsContainer.insertAdjacentHTML('beforeend', eventHtml);
+            });
+
+            // Attach collapsible event listeners
+            addCollapsibleListeners();
+        }
+
+        // Function to handle collapsible sections
+        function addCollapsibleListeners() {
+            const coll = document.getElementsByClassName('collapsible');
+            for (let i = 0; i < coll.length; i++) {
+                coll[i].addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    if (content.style.display === 'block') {
+                        content.style.display = 'none';
+                    } else {
+                        content.style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        // Load events on page load
+        loadEvents();
+    </script>
+
+</body>
+</html>

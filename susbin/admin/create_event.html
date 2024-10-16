@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Event Management</title>
+    <style>
+        body{
+            background: rgb(0, 79, 0);
+            color: aliceblue;
+        }
+        h1{
+            text-align: center;
+        }
+        .content{
+            width: 30%;
+            margin: auto;
+            /* margin: 50px; */
+            margin-top: 25px;
+        }
+        input{
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="events_list.html"><button>BACK</button></a>
+    <h1>Create New Event</h1>
+    <div class="content">
+        <form id="eventForm">
+            <label for="title">Event Title:</label>
+            <input type="text" id="title" required><br><br>
+
+            <label for="date">Event Date:</label>
+            <input type="date" id="date" required><br><br>
+
+            <label for="startTime">Start Time:</label>
+            <input type="time" id="startTime" required><br><br>
+
+            <label for="endTime">End Time:</label>
+            <input type="time" id="endTime" required><br><br>
+
+            <label for="venue">Event Venue:</label>
+            <input type="text" id="venue" required><br><br>
+
+            <label for="eventType">Event Type:</label>
+            <input type="text" id="eventType" required><br><br>
+
+            <label for="detail">Event Details:</label>
+            <textarea id="detail" rows="4" cols="50" required></textarea><br><br>
+
+            <button type="submit">Submit Event</button>
+            <p id="errorMsg" style="color: red;"></p>
+            
+        </form>
+    </div>
+
+    <script type="module">
+        // Import Firebase and Firestore modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB9M81AhHyIy6gs1GBBZBUMv-y5SrThWAA",
+            authDomain: "susbin-420d2.firebaseapp.com",
+            databaseURL: "https://susbin-420d2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "susbin-420d2",
+            storageBucket: "susbin-420d2.appspot.com",
+            messagingSenderId: "896697035981",
+            appId: "1:896697035981:web:f2f4168c3eb242361c0d84"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const eventForm = document.getElementById('eventForm');
+        const errorMsg = document.getElementById('errorMsg');
+
+        eventForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Capture form data
+            const title = document.getElementById('title').value;
+            const date = document.getElementById('date').value;
+            const startTime = document.getElementById('startTime').value;
+            const endTime = document.getElementById('endTime').value;
+            const venue = document.getElementById('venue').value;
+            const eventType = document.getElementById('eventType').value;
+            const detail = document.getElementById('detail').value;
+            
+            // Get current date in YYYY-MM-DD format
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Date validation: Ensure the event date is not in the past
+            if (date < today) {
+                errorMsg.textContent = 'The event date cannot be in the past.';
+                return;
+            }
+            
+            // Time validation: Ensure the end time is later than the start time
+            if (endTime <= startTime) {
+                errorMsg.textContent = 'End time cannot be earlier than or equal to start time.';
+                return;
+            }
+
+            try {
+                // Add new event to the Firestore "events" collection
+                await addDoc(collection(db, "events"), {
+                    title: title,
+                    date: date,
+                    startTime: startTime,
+                    endTime: endTime,
+                    venue: venue,
+                    eventType: eventType,
+                    detail: detail,
+                    createdAt: new Date()
+                });
+
+                // Show success message and reset form
+                errorMsg.textContent = 'Event added successfully!';
+                errorMsg.style.color = 'white';
+                eventForm.reset();
+            } catch (error) {
+                // Display error message if Firestore submission fails
+                errorMsg.textContent = 'Error adding event: ' + error.message;
+                errorMsg.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

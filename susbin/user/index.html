@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/index_style.css">
+    <link rel="stylesheet" href="../css/nav.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <link rel="icon" type="image/jpg" href="../image/logo.jpg">
+    <link rel="stylesheet" href="../css/img-recog.css">
+    <title>Sus.Bin</title>
+</head>
+<body>
+    <div class="banner">
+        <div class="navbar">
+            <img src="../image/logo.jpg" class="logo">
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="recycleInfo.html">Local Recycling Info</a></li>
+                <li><a href="map.html">Find a Recycle Point</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+                <li><a href="events.html">Event</a></li>
+                <li><a href="user.html">Member</a></li>
+            </ul>
+        </div> 
+
+        <div class="container">
+            <a href="quiz.html"><image class="flyer" src="../image/homepage_1.jpg"></image></a>
+            <a href="events.html"><image class="flyer" src="../image/homepage_2.jpg"></image></a>
+            <a href="map.html"><image class="flyer" src="../image/homepage_3.jpg"></image></a>
+        </div>
+
+        <h1 class="webname">Welcome to Sustainable Bin</h1>
+
+        <div class="main_title">
+            <hr class="rounded">
+            <h2>AI Recognize Recyclable Items</h2>
+        </div>
+    
+        <div class="content">
+            <input type="file" id="imageInput" accept="image/*" onchange="previewImage()">
+            <button onclick="detectObjects()">Detect Objects</button>
+            
+            <div>
+                <img id="selectedImage" style="max-width: 700px; max-height: 200px; margin-top: 20px; display: none; margin-left: auto;margin-right: auto; border: 2px solid #707070;" alt="Selected Image">
+            </div>
+    
+            <pre id="results"></pre>
+    
+            <div class="result_table">
+                <table class="table table-bordered table-dark">
+                    <thead>
+                      <tr>
+                        <th scope="col">Category (Bin)</th>
+                        <th scope="col">Detected Object</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th width="40%" scope="row">METAL<br>
+                            <image src="../image/metal_bin.jpg" width="75" height="75"></image></th>
+                        <td id="metalBin">-</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">PAPER<br>
+                            <image src="../image/paper_bin.jpg" width="75" height="75"></image></th>
+                        <td id="paperBin">-</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">PLASTIC<br>
+                            <image src="../image/plastic_bin.jpg" width="75" height="75"></image></th>
+                        <td id="plasticBin">-</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">E-WASTE<br>
+                            <image src="../image/e-waste.jpg" width="100" height="75"></th>
+                        <td id="eWasteBin">-</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">OTHER<br></th>
+                        <td id="other">-</td>
+                      </tr>
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to preview the selected image
+        function previewImage() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            const img = document.getElementById('selectedImage');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    img.src = e.target.result;
+                    img.style.display = 'block';  // Display the image
+                };
+                reader.readAsDataURL(file);
+            } else {
+                img.style.display = 'none';  // Hide the image if no file is selected
+            }
+        }
+
+        async function detectObjects() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            // Convert the image file to base64
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+                const base64Image = reader.result.replace('data:image/jpeg;base64,', '');
+
+                // Replace with your own Google Cloud Vision API key
+                const apiKey = 'AIzaSyCqzTRQ5hxPVqhQ--4GFMpRR39EsgXFLG0';
+
+                // Prepare the request payload
+                const requestPayload = {
+                    requests: [
+                        {
+                            image: {
+                                content: base64Image
+                            },
+                            features: [
+                                {
+                                    type: 'OBJECT_LOCALIZATION'
+                                }
+                            ]
+                        }
+                    ]
+                };
+
+                try {
+                    const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestPayload)
+                    });
+
+                    const data = await response.json();
+                    const objects = data.responses[0].localizedObjectAnnotations;
+
+                    // Clear previous results
+                    document.getElementById('metalBin').textContent = "-";
+                    document.getElementById('paperBin').textContent = "-";
+                    document.getElementById('plasticBin').textContent = "-";
+                    document.getElementById('eWasteBin').textContent = "-";
+                    document.getElementById('other').textContent = "-";
+                    
+                    let recognized = false;
+                    let resultText = '';
+                    // Categorize the detected objects
+                    objects.forEach(object => {
+                        const objectName = object.name.toLowerCase();
+                        resultText += `Name: ${object.name}\n`;
+
+                        if (objectName.includes("canned") || objectName.includes("aluminium") || objectName.includes("jarred")) {
+                            document.getElementById('metalBin').insertAdjacentHTML('beforeend', `<div>+ ${object.name}</div>`);
+                            recognized = true;
+                        } else if (objectName.includes("box") || objectName.includes("shipping box")) {
+                            document.getElementById('paperBin').insertAdjacentHTML('beforeend', `<div>+ ${object.name}</div>`);
+                            recognized = true;
+                        } else if (objectName.includes("bottle")) {
+                            document.getElementById('plasticBin').insertAdjacentHTML('beforeend', `<div>+ ${object.name}</div>`);
+                            recognized = true;
+                        } else if (objectName.includes("mechanical") || objectName.includes("battery")) {
+                            document.getElementById('eWasteBin').insertAdjacentHTML('beforeend', `<div>+ ${object.name}</div>`);
+                            recognized = true;
+                        } else {
+                            document.getElementById('other').insertAdjacentHTML('beforeend', `<div>+ ${object.name}</div>`);
+                            recognized = true;
+                        }
+                    });
+
+                    console.log(resultText);
+
+                    if (!recognized || resultText == null) {
+                        alert("Can't recognize this image, please try another");
+                    }
+
+                } catch (error) {
+                    alert("Can't recognize this image, please try another");
+                    // console.error('Error during object detection:', error);
+                    console.log("Unable To RECOGNIZE");
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
+    </script>
+
+</body>
+</html>
